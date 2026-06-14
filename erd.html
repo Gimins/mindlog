@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindlog — ERD (데이터 모델)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #7c3aed;
+    --purple-50: #f5f0ff;
+    --purple-100: #ede5ff;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --font: 'Noto Sans KR', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); color: var(--gray-900); background: #fff; max-width: 1100px; margin: 0 auto; padding: 32px 24px 60px; line-height: 1.6; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
+  .sub { color: var(--gray-500); font-size: 14px; margin-bottom: 28px; }
+  .diagram-box { border: 1px solid var(--gray-200); border-radius: 16px; padding: 16px; overflow-x: auto; background: #fcfcfd; margin-bottom: 36px; }
+  .mermaid { min-width: 900px; }
+  h2 { font-size: 18px; font-weight: 700; margin: 30px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--purple-100); }
+  .domain { display: inline-block; font-size: 12px; font-weight: 700; color: var(--purple); background: var(--purple-50); padding: 3px 10px; border-radius: 8px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--gray-100); }
+  th { background: var(--gray-100); font-weight: 600; font-size: 13px; }
+  td code { background: var(--gray-100); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  .rel-list li { margin-bottom: 6px; font-size: 14px; }
+  .note { background: var(--purple-50); border-left: 3px solid var(--purple); border-radius: 8px; padding: 12px 16px; font-size: 13px; color: var(--gray-700); margin: 16px 0; }
+</style>
+</head>
+<body>
+  <h1>Mindlog 데이터 모델 (ERD)</h1>
+  <div class="sub">스펙 v1.6 기반 · 사용자 · 콘텐츠 생성 · 진단/추천 · 실행 기록 · 포인트/구독 도메인 통합</div>
+
+  <div class="diagram-box">
+    <pre class="mermaid">
+erDiagram
+  USER ||--o{ DIAGNOSIS : "진단한다"
+  USER ||--o{ USER_HISTORY : "명상 기록"
+  USER ||--o{ POINT_LEDGER : "포인트 거래"
+  USER ||--o{ SUBSCRIPTION : "구독한다"
+  MEDITATION_TYPE ||--o{ CONTENT : "유형 분류"
+  MEDITATION_TYPE ||--o{ DAILY_POOL : "유형 분류"
+  DAILY_POOL |o--o| CONTENT : "사용 시 이관"
+  CONTENT ||--o{ USER_HISTORY : "실행됨"
+  CONTENT ||--o{ RECOMMENDATION : "추천됨"
+  DIAGNOSIS ||--o{ RECOMMENDATION : "추천 생성"
+  DIAGNOSIS ||--o{ USER_HISTORY : "세션 연결"
+
+  USER {
+    string user_id PK "사용자 ID"
+    string social_provider "kakao/google/apple"
+    string routine_type "morning/evening/both"
+    time morning_alarm "아침 알림"
+    time evening_alarm "저녁 알림"
+    time recall_alarm "회고 알림"
+    string wearable_type "apple/galaxy/other/none"
+    bool onboarding_done "온보딩 완료"
+    int points_balance "포인트 잔액"
+    int weekly_progress "이번주 달성일 0~7"
+    date week_start_date "현재 주 시작(월)"
+    string last_settled_week "마지막 정산 주"
+    datetime created_at "가입 일시"
+  }
+  MEDITATION_TYPE {
+    string type_id PK "M01~M08"
+    string name "유형명"
+    string name_en "영문명"
+    string method "핵심 방식"
+    string duration_range "권장 시간"
+    string brain_effect "뇌과학 효과"
+    string time_of_day "추천 시간대"
+    string bgm_profile "사운드 프로파일"
+    string bg_theme "배경 컬러/이미지"
+  }
+  CONTENT {
+    string content_id PK "콘텐츠 ID"
+    string type_id FK "명상 유형"
+    string title "제목"
+    int duration_min "소요 시간(분)"
+    string level "입문/중급/심화"
+    text script "가이드 스크립트"
+    string voice_url "보이스 URL"
+    string bgm_url "음악 URL"
+    string positive_state "긍정 상태 언어"
+    text brain_explanation "뇌과학 설명"
+    array target_states "추천 상태 키워드"
+    string time_of_day "추천 시간대"
+    datetime created_at "최초 생성"
+  }
+  DAILY_POOL {
+    string pool_id PK "풀 ID"
+    string type_id FK "명상 유형"
+    string content_id FK "이관 콘텐츠(nullable)"
+    string state_label "대상 상태 키워드"
+    text script "스크립트"
+    string voice_url "보이스 CDN URL"
+    string bgm_url "음악 CDN URL"
+    datetime generated_at "생성 일시"
+    datetime expires_at "만료(+7일)"
+  }
+  DIAGNOSIS {
+    string diagnosis_id PK "진단 ID"
+    string user_id FK "사용자"
+    text q1_battery "Q1 신체(배터리)"
+    text q2_weather "Q2 감정(날씨)"
+    text q3_song "Q3 불안(노래)"
+    text q4_space "Q4 스트레스원"
+    text q5_sleep "Q5 수면"
+    string emotion "분석1 감정분류"
+    string intensity "분석2 강도"
+    string cause "분석3 원인"
+    int hr "심박수"
+    int hrv "HRV"
+    int rr "호흡수"
+    string sleep_data "수면 데이터"
+    bool gap_detected "주관·생체 불일치"
+    string primary_series "주 계열(6중1)"
+    array state_keywords "키워드 1~3"
+    datetime created_at "진단 일시"
+  }
+  RECOMMENDATION {
+    string rec_id PK "추천 ID"
+    string diagnosis_id FK "진단"
+    string content_id FK "추천 콘텐츠"
+    int slot_no "슬롯 1~3"
+    string slot_role "직접/이완/전환"
+  }
+  USER_HISTORY {
+    string history_id PK "기록 ID"
+    string user_id FK "사용자"
+    string content_id FK "콘텐츠"
+    string diagnosis_id FK "진단(nullable)"
+    string state_label "진단 상태 키워드"
+    bool liked "좋아요 여부"
+    int liked_count "누적 좋아요"
+    bool completed "완료 여부"
+    int replayed_count "재실행 횟수"
+    string feel_state "마무리 감정"
+    int start_bpm "시작 BPM"
+    int end_bpm "종료 BPM"
+    datetime played_at "실행 일시"
+  }
+  POINT_LEDGER {
+    string ledger_id PK "거래 ID"
+    string user_id FK "사용자"
+    string txn_type "earn/redeem"
+    int amount "증감 포인트"
+    int balance_after "거래 후 잔액"
+    string reason "weekly/subscription/center"
+    string week_ref "정산 주"
+    datetime created_at "거래 일시"
+  }
+  SUBSCRIPTION {
+    string subscription_id PK "구독 ID"
+    string user_id FK "사용자"
+    string plan "free/premium"
+    datetime started_at "시작"
+    datetime expires_at "만료"
+    string payment_ref "결제 참조"
+  }
+    </pre>
+  </div>
+
+  <h2>도메인별 엔터티 설명</h2>
+
+  <div class="domain">① 사용자 · 온보딩 · 포인트</div>
+  <table>
+    <tr><th>엔터티</th><th>역할</th><th>핵심 필드</th></tr>
+    <tr><td><code>USER</code></td><td>가입·온보딩 설정 + 포인트 상태를 함께 보관하는 중심 엔터티</td><td>routine_type, wearable_type, points_balance, weekly_progress</td></tr>
+    <tr><td><code>SUBSCRIPTION</code></td><td>Free/Premium 구독 상태 (수익 모델)</td><td>plan, expires_at</td></tr>
+    <tr><td><code>POINT_LEDGER</code></td><td>포인트 적립·사용 거래 내역 (감사 추적)</td><td>txn_type, amount, balance_after, reason</td></tr>
+  </table>
+  <div class="note">포인트 <strong>잔액(points_balance)</strong>은 USER에 두고, 모든 증감은 <strong>POINT_LEDGER</strong>에 한 줄씩 기록한다. 잔액과 거래내역을 분리해야 정산 오류·중복 적립을 추적할 수 있다(<code>last_settled_week</code>로 주간 중복 정산 방지).</div>
+
+  <div class="domain">② 콘텐츠 · AI 생성</div>
+  <table>
+    <tr><th>엔터티</th><th>역할</th><th>핵심 필드</th></tr>
+    <tr><td><code>MEDITATION_TYPE</code></td><td>8가지 명상 유형(M01~M08) 고정 마스터</td><td>type_id, brain_effect, bg_theme</td></tr>
+    <tr><td><code>DAILY_POOL</code></td><td>매일 새벽 AI가 생성하는 추천 풀 (7일 후 만료)</td><td>state_label, expires_at, voice_url</td></tr>
+    <tr><td><code>CONTENT</code></td><td>실제 사용·좋아요로 영구 보존된 콘텐츠 (Permanent DB)</td><td>target_states, positive_state, brain_explanation</td></tr>
+  </table>
+  <div class="note">핵심 이중 구조: <strong>DAILY_POOL</strong>(매일 102개 생성, 미사용 시 7일 후 삭제) → 사용자가 실행/좋아요하면 <strong>CONTENT</strong>로 이관(promote)되어 영구 보존. <code>target_states</code> 배열이 진단 키워드와 콘텐츠를 잇는 추천 매칭 키다.</div>
+
+  <div class="domain">③ 진단 · 추천</div>
+  <table>
+    <tr><th>엔터티</th><th>역할</th><th>핵심 필드</th></tr>
+    <tr><td><code>DIAGNOSIS</code></td><td>5개 답변 + 생체 데이터 + 분석 결과를 담는 1회 진단 세션</td><td>emotion/intensity/cause, gap_detected, primary_series, state_keywords</td></tr>
+    <tr><td><code>RECOMMENDATION</code></td><td>한 진단이 만든 3개 추천 슬롯</td><td>slot_no, slot_role(직접/이완/전환)</td></tr>
+  </table>
+  <div class="note">DIAGNOSIS 한 건이 분석 1~4(감정·강도·원인·생체 gap)를 모두 저장하고, <strong>주 계열(primary_series)</strong> 1개를 확정한다. 이 진단이 <strong>RECOMMENDATION</strong> 3행(슬롯 1·2·3)을 생성하며 각 슬롯은 CONTENT를 가리킨다.</div>
+
+  <div class="domain">④ 실행 · 히스토리</div>
+  <table>
+    <tr><th>엔터티</th><th>역할</th><th>핵심 필드</th></tr>
+    <tr><td><code>USER_HISTORY</code></td><td>명상 실행/완료/좋아요/감정 기록 (캘린더·기록 탭의 원천)</td><td>completed, liked, feel_state, start_bpm/end_bpm</td></tr>
+  </table>
+  <div class="note">USER_HISTORY는 <strong>USER · CONTENT · DIAGNOSIS</strong> 세 곳을 참조한다. <code>liked=true</code> 행이 "내 명상 모음"이 되고, <code>liked_count>=3</code>이면 추천 가중치(2배)로 피드백된다. <code>feel_state</code>는 마무리 화면의 감정 버튼 선택값이다.</div>
+
+  <h2>관계(Relationship) 요약</h2>
+  <ul class="rel-list">
+    <li><code>USER 1 : N DIAGNOSIS</code> — 사용자는 매일 여러 번 진단</li>
+    <li><code>DIAGNOSIS 1 : N RECOMMENDATION</code> — 진단 1건 → 추천 슬롯 3개</li>
+    <li><code>DIAGNOSIS 1 : N USER_HISTORY</code> — 진단에서 선택·실행한 세션</li>
+    <li><code>MEDITATION_TYPE 1 : N CONTENT / DAILY_POOL</code> — 유형이 콘텐츠·풀을 분류</li>
+    <li><code>DAILY_POOL 1 : 1 CONTENT</code> (optional) — 사용 시 영구 콘텐츠로 이관</li>
+    <li><code>CONTENT 1 : N USER_HISTORY / RECOMMENDATION</code> — 콘텐츠는 여러 번 추천·실행</li>
+    <li><code>USER 1 : N POINT_LEDGER / SUBSCRIPTION</code> — 포인트 거래·구독 이력</li>
+  </ul>
+
+  <div class="note">설계 메모: 진단 답변(q1~q5)을 DIAGNOSIS에 컬럼으로 두었으나, 질문 수가 늘면 <code>DIAGNOSIS_ANSWER</code> 자식 테이블로 분리하는 게 유연하다. 생체 데이터도 시계열로 쌓으려면 별도 <code>BIOMETRIC_LOG</code>를 둘 수 있다(MVP는 진단 시점 스냅샷만 보관).</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', er: { layoutDirection: 'TB', entityPadding: 12 } });
+</script>
+</body>
+</html>
