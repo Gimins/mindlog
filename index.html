@@ -533,6 +533,16 @@
   .streak-week { text-align: right; }
   .streak-week-num { font-size: 18px; font-weight: 700; }
   .streak-week-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+  .points-card { margin-top: 10px; background: linear-gradient(135deg, rgba(252,211,77,0.18), rgba(167,139,250,0.18)); border: 1px solid rgba(252,211,77,0.3); border-radius: 14px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .points-left { display: flex; align-items: center; gap: 10px; }
+  .points-star { font-size: 22px; }
+  .points-balance { font-size: 17px; font-weight: 700; color: #fde68a; }
+  .points-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .points-progress-wrap { text-align: right; min-width: 110px; }
+  .points-week-label { font-size: 11px; color: rgba(255,255,255,0.85); margin-bottom: 5px; }
+  .points-week-label strong { color: #fde68a; }
+  .points-bar { height: 5px; background: rgba(255,255,255,0.18); border-radius: 3px; overflow: hidden; }
+  .points-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #fbbf24, #a78bfa); border-radius: 3px; }
 
   .home-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
   .home-section-title { font-size: 13px; font-weight: 600; color: var(--gray-400); letter-spacing: 0.3px; margin-bottom: 12px; }
@@ -1307,6 +1317,19 @@
           <div class="streak-week">
             <div class="streak-week-num">5회</div>
             <div class="streak-week-label">이번 주</div>
+          </div>
+        </div>
+        <div class="points-card">
+          <div class="points-left">
+            <span class="points-star">✨</span>
+            <div>
+              <div class="points-balance">6,600 P</div>
+              <div class="points-sub">프리미엄까지 3,300P · 한 주 더!</div>
+            </div>
+          </div>
+          <div class="points-progress-wrap">
+            <div class="points-week-label">이번 주 <strong>5/5일</strong> 달성 🎉</div>
+            <div class="points-bar"><div class="points-bar-fill"></div></div>
           </div>
         </div>
       </div>
